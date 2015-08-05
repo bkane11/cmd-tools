@@ -1,0 +1,18 @@
+mkdir empty_dir
+robocopy empty_dir the_dir_to_delete /s /mir
+rmdir empty_dir
+rmdir the_dir_to_delete
+
+modify below with actual path to delete
+====================================
+
+mkdir empty_dir
+robocopy empty_dir dwr-woodland-south /s /mir
+rmdir empty_dir
+rmdir dwr-woodland-south
+
+clone/old/dms-marketing/SMCCCD
+clone/old/dms-marketing/west-sac-flood-maps
+dms-marketing_old_bak
+dwr-woodland-south
+yo-poak-da-v1

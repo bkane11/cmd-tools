@@ -1,0 +1,5 @@
+mongoimport -d geo_data --type json --file "C:\Users\ben_kane\Documents\Aptana Studio 3 Workspace\dms-marketing\dwr-woodland-south\app\json\geomorph_polys.json" -c geomorph_polys
+
+db.geomorph_polys.ensureIndex({ 'geometry.coordinates' : '2d'})
+
+mongoimport -d geo_data --type json --file "C:\temp\DWR\geomorph_polys.json" -c geomorph_polys --drop
