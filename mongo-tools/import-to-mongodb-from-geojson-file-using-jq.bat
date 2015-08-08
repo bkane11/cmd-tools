@@ -1,4 +1,6 @@
 @echo off
+REM spaces and mapped drives cause problems
+REM - for now just CD into the target dir first
 
 SETLOCAL EnableDelayedExpansion
 
