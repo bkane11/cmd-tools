@@ -10,36 +10,25 @@ FOR %%A IN (%*) DO (
     SET %%G=%%H
    )
 )
-
-
 if "%INPUT%"=="" call :messageAndExit "Must specify INPUT"
 if "%DB%"=="" call :messageAndExit "Must specify DB (database)"
 if "%COLLECTION%"=="" call :messageAndExit "Must specify COLLECTION"
 
 if "%TEST%"=="" (
   @echo preparing to import %INPUT% into %DB%.%COLLECTION%
-  FOR /F "delims=" %%i in ('jq -r --compact-output .features[]  %INPUT% ') DO (
-    set formatted=%%i
-    REM remove the empty z entry in coordinates
-    call set formatted=%%formatted:,0]=]%%
-    @echo !formatted! | mongoimport -d %DB% -c %COLLECTION% 
-    REM --verbose
-  )
+  REM remove `,0]` (the z coordinate) with sed 's/\,0\]/\]/g'
+  REM - TODO - that might not always be what you want to do
+  powershell -command "jq -r --compact-output .features[]  %INPUT% | sed 's/\,0\]/\]/g' | mongoimport -d %DB% -c %COLLECTION%" 
+
   @echo MAKING INDICES
+  REM %~dp0 is batch file directory
   mongo --nodb --quiet --eval "var collection='%COLLECTION%'"^
-   "C:\Users\ben_kane\Documents\Aptana Studio 3 Workspace\cmd-tools\mongo-tools\ensure-indexes-on-all-properties.js"
-  REM jq -r --compact-output .features[] %INPUT% | mongoimport -d %DB% -c %COLLECTION% --verbose
+   "%~dp0ensure-indexes-on-all-properties.js"
   exit /b
 ) else (
-  @echo *** TEST ***
+  @echo *** TEST *** on %INPUT%
   @echo preparing to import %INPUT% into %DB%.%COLLECTION%
-  FOR /F "delims=" %%i in ('jq -r --compact-output .features[]  %INPUT% ') DO (
-    set formatted=%%i
-    REM remove the empty z entry in coordinates
-    call set formatted=%%formatted:,0]=]%%
-    @echo. !formatted!
-  )
-  REM FOR /F "delims=" %%i in ('jq -r --compact-output .features[] %INPUT%') DO @echo. %%i
+  powershell -command "jq -r --compact-output .features[]  %INPUT% | sed 's/\,0\]/\]/g' "
 )
 
 exit /b
@@ -51,6 +40,6 @@ exit /b 1
 
 REM test with:
 REM cd "C:\temp\Mendocino Hazard KMZ Files"
-REM "C:\Users\ben_kane\Documents\Aptana Studio 3 Workspace\cmd-tools\mongo-tools\import-to-mongodb-from-geojson-file-using-jq.bat" ^
+REM "C:\projects\cmd-tools\mongo-tools\import-to-mongodb-from-geojson-file-using-jq.bat" ^
  INPUT:8Asbestos_KMZ.json COLLECTION:venturamhmp_asbestos DB:geo_data ^
  TEST:true
