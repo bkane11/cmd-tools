@@ -1,0 +1,14 @@
+{
+  "name": "cmd-tools",
+  "version": "1.0.0",
+  "description": "tools for cmd",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "ben kane",
+  "license": "ISC",
+  "dependencies": {
+    "turf": "^2.0.2"
+  }
+}
