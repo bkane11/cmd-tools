@@ -1,25 +1,7 @@
-var feature = db.venturamhmp_flood_daminundation_waivereddaminundation_may2015.findOne({ _id: ObjectId('55e0e6471574151491421630') })
-
 function flattenCoords(feature){
   return feature.geometry.coordinates.reduce(function(a,b){ return a.concat(b) })
 }
 
-// feature.geometry.coordinates.forEach(
-//   function(b, index){
-//     var dupes = find_duplicates(b);
-//     var dupe = dupes[Object.keys(dupes)[0]];
-//     if(dupe.length>2){
-//       print(index);
-//       printjson(dupes);
-//       var badvertex = dupe[1];
-//       // printjson(dupe)
-//       var coordpoint = feature.geometry.coordinates[index];
-//       coordpoint[badvertex][0]-=0.0000000000001;
-//       coordpoint[badvertex][1]+=0.00000000000001;
-//       printjson([coordpoint[0], coordpoint[badvertex],coordpoint[coordpoint.length-1]]);
-//       // printjson([coordpoint[0], coordpoint[badvertex-1],coordpoint[badvertex],coordpoint[badvertex+1], coordpoint[coordpoint.length-1]]);
-//     }
-// })
 
 function findDupesByGroup(feature, output){
   var arr = [];
@@ -114,7 +96,7 @@ function findDupe(b,index){
     var dupes = find_duplicates(b);
     printjson(dupes);
     var dupe = dupes[Object.keys(dupes)[0]];
-    if(dupe && dupe.length>2 || ){
+    if(dupe && dupe.length>2){
       printjson(dupe);
       print(index);
       printjson(dupes);
@@ -156,30 +138,38 @@ function checkForGeoIndexes(mongobase, collection){
   })
 }
 
-var props = {'stroke-width': 0}
+function checkForTextIndexes(mongobase, collection){
+  getCollections(mongobase, collection).forEach(function(col){ 
+    var hasindex;
+    db[col].getIndexes().forEach(function(index){
+      if(index.name==="$**_text"){
+        hasindex = true;
+        // printjson([col, index])
+      } 
+    })
+    if(!hasindex){
+      try{
+        print('adding text index to', col);
+        db[col].createIndex( { "$**": "text" } );
+      }catch(err){
+        print(col, 'does not have text index')
+      }
+    }
+  })
+}
+
+// var props = {'stroke-width': 0}
 function updateSymbology(mongobase, collection, props){
   getCollections(mongobase, collection).forEach(function(col){
     print(col);
     db[col].find().toArray().forEach(function(feature){
       // printjson(feature.properties);
-      for(var prop in props){
-        var og = feature.properties[prop];
-        if(og)
-          feature.properties['og_'+prop] = og;
-        feature.properties[prop] = props[prop];
-        print(prop, og, '==>', feature.properties[prop]);
-      }
+      updateProps(feature, props);
       db[col].save(feature);
     })
   })
 }
 
-getCollections(null, 'daminundation').forEach(function(col){  
-  ['hlshd_30m', 'NAIP\\California_2014_1m', 'Bookmark 1'].forEach(function(removeItem){
-    db[col].remove({'properties.name': removeItem })
-  })  
-})
-// feature.geometry.coordinates.forEach(findDupe);
 
 function searchForDuplicatesInCollection(mongobase, collection, update){
   getCollections(mongobase, collection).forEach(function(col){
@@ -210,5 +200,104 @@ function searchForDuplicatesInCollection(mongobase, collection, update){
         // printjson(d[0][0]) 
       })
       })
+  })
+}
+
+function forEachFeature(collection, func){
+  db[collection].find().toArray().forEach(func);
+}
+
+function updateProps(feature, props){
+  for(var prop in props){
+    // printjson(['updating', prop])
+    var og = feature.properties[prop];
+    if(og)
+      feature.properties['og_'+prop] = og;
+    feature.properties[prop] = props[prop];
+    print(prop, og || '', '==>', feature.properties[prop]);
+  }
+  return feature
+}
+
+function setPropertiesFromTable(feature, col){
+  for(var prop in feature.properties){
+    if( /<table/i.test(feature.properties[prop]) ){
+      var propsArr = getPropsFromTable(feature.properties[prop]);
+      if(propsArr && propsArr.length > 0){  
+        propsArr.forEach(function(prop){
+          printjson(prop);
+          updateProps(feature, prop);
+        })
+        if(col && db[col])
+          printjson(db[col].save(feature))
+        
+      }
+    }
+  }
+}
+
+function getPropsFromTable(table){
+  return table.split(/<tr(.*)>/g)
+      .map(function(item){
+        return item && item.trim()
+      })
+      .filter(function(item){
+          return item && /<td(.*)>/g.test( item )
+      })
+      .map(function(s2, i){
+        var a = s2
+          .replace(/<\/tr>/g, '')
+          .replace(/<(\/)?td>/g, '')
+          .replace(/\r/g, '')
+          .trim()
+          .split(/\n/)
+          .map(function(item, index, arr){
+            return arr.length == 2 ? item : null
+          })
+          .filter(function(item){
+            return item
+          })
+        if(a.length == 2){
+          var props = {};
+          props[a[0]] = a[1];
+          return props
+        }
+        return null
+    }).filter(function(item){
+      return item
+    })
+}
+
+// var feature = db.venturamhmp_flood_daminundation_waivereddaminundation_may2015.findOne({ _id: ObjectId('55e0e6471574151491421630') })
+
+// feature.geometry.coordinates.forEach(
+//   function(b, index){
+//     var dupes = find_duplicates(b);
+//     var dupe = dupes[Object.keys(dupes)[0]];
+//     if(dupe.length>2){
+//       print(index);
+//       printjson(dupes);
+//       var badvertex = dupe[1];
+//       // printjson(dupe)
+//       var coordpoint = feature.geometry.coordinates[index];
+//       coordpoint[badvertex][0]-=0.0000000000001;
+//       coordpoint[badvertex][1]+=0.00000000000001;
+//       printjson([coordpoint[0], coordpoint[badvertex],coordpoint[coordpoint.length-1]]);
+//       // printjson([coordpoint[0], coordpoint[badvertex-1],coordpoint[badvertex],coordpoint[badvertex+1], coordpoint[coordpoint.length-1]]);
+//     }
+// })
+
+// getCollections(null, 'daminundation').forEach(function(col){  
+//   ['hlshd_30m', 'NAIP\\California_2014_1m', 'Bookmark 1'].forEach(function(removeItem){
+//     db[col].remove({'properties.name': removeItem })
+//   })  
+// })
+// feature.geometry.coordinates.forEach(findDupe);
+
+function setPropertiesFromTableByCollectionSearch(search, test){
+  getCollections(search).forEach(function(col){ 
+    forEachFeature(col, function(feature){
+      setPropertiesFromTable(feature, test ? null : col) 
+    }) 
   })
 }
