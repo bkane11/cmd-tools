@@ -158,6 +158,16 @@ function checkForTextIndexes(mongobase, collection){
   })
 }
 
+function checkForDescriptionField(mongobase, collection){
+  getCollections(mongobase, collection).forEach(function(col){ 
+    var item = db[col].findOne({},{'properties': true});
+    if(!item || !item.properties || !item.properties.description)
+      print('no description field for:', col);
+    // else
+    //   printjson([col, 'has a description'])
+  })
+}
+
 // var props = {'stroke-width': 0}
 function updateSymbology(mongobase, collection, props){
   getCollections(mongobase, collection).forEach(function(col){
@@ -299,5 +309,135 @@ function setPropertiesFromTableByCollectionSearch(search, test){
     forEachFeature(col, function(feature){
       setPropertiesFromTable(feature, test ? null : col) 
     }) 
+  })
+}
+
+// var lookup = [{
+//     url: "Layer0_Symbol_15e0f278_0.png",
+//     prop: 'Community'    
+// }, {
+//     url: "Layer0_Symbol_15e0ee10_0.png",
+//     prop: 'Government'
+// }, {
+//     url: "Layer0_Symbol_15e0ec98_0.png",
+//     prop: 'Public Utility'
+// }, {
+//     url: "Layer0_Symbol_15e0f3f0_0.png",
+//     prop: 'Emergency Response'
+// }, {
+//     url: "Layer0_Symbol_15e0ef88_0.png",
+//     prop: 'Education'
+// }, {
+//     url: "Layer0_Symbol_15e0f100_0.png",
+//     prop: 'Medical Facility/Residential Care'
+// }, {
+//     url: "Layer0_Symbol_15e0f568_0.png",
+//     prop: 'Fuel Distribution'
+// }, {
+//     url: "Layer0_Symbol_15e0f6e0_0.png",
+//     prop: 'Transportation'
+// }]
+
+var lookup = [{
+    url : 'Layer0_Symbol_23288aa8_0.png',
+    prop: 'Severe Repetitive Loss Property'    
+  },
+  { 
+    url: "Layer0_Symbol_23288c20_0.png",
+    prop: 'Repetitive Loss Property'    
+  }
+]
+function updateFeaturesByIconUrlAndPropLookup(col, lookup, propname, test){
+  db[col].find().toArray().forEach(function(feature){
+    lookup.some(function(item){
+      if(item.url==feature.properties.icon.url){
+        printjson([item, feature.properties.name]);
+        feature.properties[propname] = item.prop;
+        if(!test)
+          db[col].save(feature);
+        return true
+      }  
+    })
+  })
+}
+
+// 'fill-opacity': 1,
+// var lookup = [
+//   {
+//     COMMODITY: 'avocado',
+//     props: {
+//       fill: "rgb(0,176,80)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'lemon',
+//     props : {
+//       fill: "rgb(255,255,0)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'nursery',
+//     props : {
+//       fill: "rgb(0,176,240)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'orange',
+//     props : {
+//       fill: "rgb(255,102,0)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'nursery',
+//     props : {
+//       fill: "rgb(0,176,240)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'raspberry',
+//     props : {
+//       fill: "rgb(204,0,255)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'row crops',
+//     props : {
+//       fill: "rgb(152,230,0)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'strawberry',
+//     props : {
+//       fill: "rgb(255,0,0)"
+//     }
+//   },
+//   {
+//     COMMODITY: 'tangerine',
+//     props : {
+//       fill: "rgb(255,192,0)"
+//     }
+//   }
+// ]
+
+// var nomatchprops = {fill: 'rgb(238,205,247)'};
+
+function updateFeaturesByPropertyUrlAndPropLookup(col, lookup, propname, nomatchprops, test){
+  forEachFeature(col, function(feature){
+    var found;
+    lookup.some(function(item){
+      if(item[propname]==feature.properties[propname]){
+        updateProps(feature, item.props);
+        // if(!test)
+        //   db[col].save(feature);
+        // print(item[propname], 'FOUND')
+        return found = true
+      }  
+    })
+    if(!found){
+      updateProps(feature, nomatchprops)
+    }
+    printjson(feature.properties[propname]);
+    if(!test)
+      db[col].save(feature);
   })
 }
