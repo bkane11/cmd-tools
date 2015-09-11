@@ -304,9 +304,11 @@ function getPropsFromTable(table){
 // })
 // feature.geometry.coordinates.forEach(findDupe);
 
-function setPropertiesFromTableByCollectionSearch(search, test){
-  getCollections(search).forEach(function(col){ 
+function setPropertiesFromTableByCollectionSearch(mongobase, search, test){
+  getCollections(mongobase, search).forEach(function(col){ 
+    print(col)
     forEachFeature(col, function(feature){
+      // printjson(feature)
       setPropertiesFromTable(feature, test ? null : col) 
     }) 
   })
