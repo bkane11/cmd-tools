@@ -113,8 +113,9 @@ function getCollections(mongobase, hazardgroup){
   ;
   var collections = [];
   db.getCollectionNames().forEach(function(possible){
-    var test = new RegExp('^' + mongobase);
-    if( test.test(possible) && (hazardgroup ? possible.indexOf(hazardgroup)!==-1 : true)){
+    var test = new RegExp('^' + mongobase, 'i');
+    if( test.test(possible) && (hazardgroup ? new RegExp(hazardgroup, 'i').test(possible) : true ) ){
+      // possible.indexOf(hazardgroup)!==-1 : true)){
       var collection = possible;
       // print(possible)
       // print(collection);
@@ -240,7 +241,6 @@ function setPropertiesFromTable(feature, col){
         })
         if(col && db[col])
           printjson(db[col].save(feature))
-        
       }
     }
   }
@@ -308,7 +308,6 @@ function setPropertiesFromTableByCollectionSearch(mongobase, search, test){
   getCollections(mongobase, search).forEach(function(col){ 
     print(col)
     forEachFeature(col, function(feature){
-      // printjson(feature)
       setPropertiesFromTable(feature, test ? null : col) 
     }) 
   })
@@ -341,12 +340,12 @@ function setPropertiesFromTableByCollectionSearch(mongobase, search, test){
 // }]
 
 var lookup = [{
-    url : 'Layer0_Symbol_23288aa8_0.png',
-    prop: 'Severe Repetitive Loss Property'    
+    url : 'Layer0_Symbol_16e56d00_0.png',
+    prop: 'Repetitive Loss Property'    
   },
   { 
-    url: "Layer0_Symbol_23288c20_0.png",
-    prop: 'Repetitive Loss Property'    
+    url: 'Layer0_Symbol_16e57168_0.png',
+    prop: 'Severe Repetitive Loss Property'    
   }
 ]
 function updateFeaturesByIconUrlAndPropLookup(col, lookup, propname, test){
@@ -422,6 +421,21 @@ function updateFeaturesByIconUrlAndPropLookup(col, lookup, propname, test){
 // ]
 
 // var nomatchprops = {fill: 'rgb(238,205,247)'};
+var lookup = [
+  {
+    FLD_ZONE: "0.2 PCT ANNUAL C*",
+    props: {
+      'floodplain_type': "500-Year Floodplain (0.2 pct Annual Chance Floodplain)"
+    }
+  },
+  {
+    FLD_ZONE: "D",
+    props: {
+      'floodplain_type': "Area of Undetermined but Possible Flood Hazards"
+    }
+  },
+]
+var nomatchprops = {'floodplain_type': '100-Year Floodplain (1 pct Annual Chance Floodplain)'};
 
 function updateFeaturesByPropertyUrlAndPropLookup(col, lookup, propname, nomatchprops, test){
   forEachFeature(col, function(feature){
@@ -443,3 +457,4 @@ function updateFeaturesByPropertyUrlAndPropLookup(col, lookup, propname, nomatch
       db[col].save(feature);
   })
 }
+
