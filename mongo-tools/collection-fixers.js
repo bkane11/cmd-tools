@@ -421,21 +421,42 @@ function updateFeaturesByIconUrlAndPropLookup(col, lookup, propname, test){
 // ]
 
 // var nomatchprops = {fill: 'rgb(238,205,247)'};
-var lookup = [
-  {
-    FLD_ZONE: "0.2 PCT ANNUAL C*",
-    props: {
-      'floodplain_type': "500-Year Floodplain (0.2 pct Annual Chance Floodplain)"
-    }
-  },
-  {
-    FLD_ZONE: "D",
-    props: {
-      'floodplain_type': "Area of Undetermined but Possible Flood Hazards"
-    }
-  },
-]
-var nomatchprops = {'floodplain_type': '100-Year Floodplain (1 pct Annual Chance Floodplain)'};
+// var lookup = [
+//   {
+//     FLD_ZONE: "0.2 PCT ANNUAL C*",
+//     props: {
+//       'floodplain_type': "500-Year Floodplain (0.2 pct Annual Chance Floodplain)"
+//     }
+//   },
+//   {
+//     FLD_ZONE: "D",
+//     props: {
+//       'floodplain_type': "Area of Undetermined but Possible Flood Hazards"
+//     }
+//   },
+// ]
+// var nomatchprops = {'floodplain_type': '100-Year Floodplain (1 pct Annual Chance Floodplain)'};var lookup = [
+//  var lookup = [
+//   {
+//     styleUrl: "#LineStyle10",
+//     props: {
+//       'levee_certification_status': "Levee met the certification requirements found in 44 CFR 65.10 Levee Certification Report (LCR), submitted to FEMA in November 2009"
+//     }
+//   },
+//   {
+//     styleUrl: "#LineStyle11",
+//     props: {
+//       'levee_certification_status': "Levee in its current condition was unable to be certified in November 2009. Rehabilitation and/or improvement project design engineering, CEQA, and/or PSE work underway"
+//     }
+//   },
+//   {
+//     styleUrl: "#LineStyle13",
+//     props: {
+//       'levee_certification_status': "Levee to be certified by other means (CLOMR/LOMR) as a result of channel widening/deepening completed in 2014"
+//     }
+//   }
+// ]
+// var nomatchprops = {'levee_certification_status': 'Other'};
 
 function updateFeaturesByPropertyUrlAndPropLookup(col, lookup, propname, nomatchprops, test){
   forEachFeature(col, function(feature){
@@ -458,3 +479,27 @@ function updateFeaturesByPropertyUrlAndPropLookup(col, lookup, propname, nomatch
   })
 }
 
+// var propreplacers = {
+//      '/(^A$|^A99$|^AE$|^AH$|^AO$|^VE$)/i' : '100-Year Floodplain (1% Annual Chance Floodplain)'
+//      , '/^0.2 PCT ANNUAL C*$/i' : '500-Year Floodplain (0.2% Annual Chance Floodplain)'
+//      , '/^D$/i' : 'Area of Undetermined but Possible Flood Hazards'
+// }
+
+function updateCollectionWithPropReplacers(col, property, replacers, test){
+  forEachFeature(col, function(feature){
+    var properties = feature.properties
+    , prop = properties[property]
+    ;
+    for(var key in replacers){
+      var parts = key.split('/')
+      , exp = new RegExp(parts[1], parts[2]);
+      if(exp.test(prop)){
+        print(prop, 'matches with:', key, 'setting to ==>', replacers[key]);
+        if(!test){
+          feature.properties[property] = replacers[key];
+          db[col].save(feature)
+        }
+      }
+    }
+  })
+}
